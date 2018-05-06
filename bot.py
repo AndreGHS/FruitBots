@@ -6,6 +6,7 @@ class Bot():
         self.row = 0;
         self.column = 0;
         self.banana_count = 0;
+        self.fruit_count = 0;
         self.boardSize = 0;
 
     def move_up(self):
@@ -26,6 +27,7 @@ class Bot():
 
     def catch_banana(self):
         self.banana_count += 1;
+        self.fruit_count += 1;
 
     def setBoard_size(self, size):
         self.boardSize = size;

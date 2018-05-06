@@ -4,6 +4,8 @@ from slidersFile import Slider
 from random import randint
 
 # grid size
+WINDOW_SIZE = [720, 516]
+
 width = 30
 height = 30
 margin = 5
@@ -14,8 +16,6 @@ GREEN = (0, 255, 0)
 bright_green = (0, 200, 0)
 bright_red = (200, 0, 0)
 
-WINDOW_SIZE = [720, 516]
-
 player_img = pygame.image.load('img/bot.png')
 banana_img = pygame.image.load('img/banana.png')
 
@@ -23,19 +23,15 @@ banana_img = pygame.image.load('img/banana.png')
 gridSize = 10
 grid = [[0 for x in range(gridSize)] for y in range(gridSize)]
 
-pygame.init()
-font = pygame.font.SysFont("comicsansms", 32)
-font_color = pygame.Color('springgreen')
-
 # timer variables
 passed_time = 0
 timer_started = False
 
-screen = pygame.display.set_mode(WINDOW_SIZE)
-done = False
-clock = pygame.time.Clock()
-pygame.display.set_caption("Fruit Bots")
+font = pygame.font.SysFont("comicsansms", 32)
+fontScore = pygame.font.SysFont("arial", 20)
+font_color = pygame.Color('springgreen')
 
+# Sliders settings
 num_bananas = Slider("Bananas", 2, 5, 1, 25)
 num_apples = Slider("Apples", 2, 5, 1, 175)
 num_watermelons = Slider("Watermelons", 2, 5, 1, 325)
@@ -44,6 +40,12 @@ slides = list()
 slides.append(num_bananas)
 slides.append(num_apples)
 slides.append(num_watermelons)
+
+pygame.init()
+screen = pygame.display.set_mode(WINDOW_SIZE)
+done = False
+clock = pygame.time.Clock()
+pygame.display.set_caption("Fruit Bots")
 
 
 def gameLoop():
@@ -74,7 +76,6 @@ def gameLoop():
 
     #apple_pos = [2, 2]
     #apples.append(apple_pos)
-
     #fruits.append(apple_pos)
 
     # fills the fruits in the board
@@ -109,6 +110,11 @@ def gameLoop():
                 if timer_started:
                     start_time = pygame.time.get_ticks()
             if gamestart:
+                if pressed[pygame.K_q]:
+                    timer_started = False
+                    passed_time = 0
+                    gameLoop()
+
                 if pressed[pygame.K_DOWN]:
                     grid[player.row][player.column] = 0
                     player.move_down()
@@ -136,15 +142,11 @@ def gameLoop():
         # draws timer
         if timer_started:
             passed_time = pygame.time.get_ticks() - start_time
-        text = font.render(str(passed_time // 1000), True, font_color)
+        text = font.render("Timer: " + str(passed_time // 1000), True, font_color)
         screen.blit(text, (WINDOW_SIZE[0] - text.get_width(), 0))
 
-        # check if there's no more fruits
-
-
-        for s in slides:
-            if s.hit:
-                s.move()
+        scoretext = fontScore.render("Score: " + str(player.fruit_count), True, font_color)
+        screen.blit(scoretext, (WINDOW_SIZE[0] / 2 + WINDOW_SIZE[0] / 4, WINDOW_SIZE[1]/2))
 
         # draw grid and images
 
@@ -153,9 +155,8 @@ def gameLoop():
                 color = WHITE
                 use_img = False
 
-                pygame.draw.rect(screen, color,
-                                     [(margin + width) * column + margin, (margin + height) * row + margin, width,
-                                      height])
+                pygame.draw.rect(screen, color, [(margin + width) * column + margin, (margin + height) * row + margin,
+                                                 width, height])
                 if grid[row][column] == -1:
                     img_toDraw = player_img
                     use_img = True
@@ -163,18 +164,18 @@ def gameLoop():
                 if grid[row][column] == 1:
                     img_toDraw = banana_img
                     use_img = True
-                    pygame.draw.rect(screen, RED,
-                                         [(margin + width) * column + margin, (margin + height) * row + margin, width,
-                                          height])
+                    pygame.draw.rect(screen, RED, [(margin + width) * column + margin, (margin + height) * row + margin,
+                                                   width, height])
 
                 if use_img:
-                    screen.blit(img_toDraw,
-                                    (((margin + width) * column + margin), ((margin + height) * row + margin)))
+                    screen.blit(img_toDraw, (((margin + width) * column + margin), ((margin + height) * row + margin)))
 
+        # check if there's no more fruits
         if len(fruits) == 0:
             timer_started = False
             passed_time = 0
             endGame()
+
         # check if time has ended
         if passed_time // 1000 >= 10:
             timer_started = False
@@ -182,7 +183,12 @@ def gameLoop():
             gameOver()
 
         for s in slides:
+            if s.hit:
+                s.move()
+
+        for s in slides:
             s.draw()
+
         clock.tick(60)
         pygame.display.flip()
 
