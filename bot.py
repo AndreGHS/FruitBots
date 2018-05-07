@@ -1,33 +1,49 @@
+import pygame
+import random
+
 class Bot():
 
-
-
-    def __init__(self):
-        self.row = 0;
-        self.column = 0;
-        self.banana_count = 0;
-        self.fruit_count = 0;
-        self.boardSize = 0;
+    def __init__(self, img_size = None, img =pygame.image.load('img/bot.png')):
+        self.row = 0
+        self.column = 0
+        self.banana_count = 0
+        self.fruit_count = 0
+        self.boardSize = 0
+        if img_size: 
+            img = pygame.transform.scale(img, (img_size, img_size))    
+            self.img_size = img_size
+        else:   
+            self.img_size = img.get_size()[0]
+        self.img = img
+        
+    def draw(self, new_frame, margin, width, height, grid_offset_x, grid_offset_y):
+        full_width = margin + width
+        full_height = margin + height
+        new_frame.blit(self.img, ((full_width * self.column + margin + grid_offset_x + (full_width-self.img_size)/2), (full_height * self.row + margin + grid_offset_y+ (full_height-self.img_size)/2)))
 
     def move_up(self):
         if self.row - 1 >= 0:
-            self.row -= 1;
+            self.row -= 1
 
     def move_down(self):
         if self.row + 1 <= self.boardSize:
-            self.row += 1;
+            self.row += 1
 
     def move_right(self):
         if self.column + 1 <= self.boardSize:
-            self.column += 1;
+            self.column += 1
 
     def move_left(self):
         if self.column - 1 >= 0:
-            self.column -= 1;
+            self.column -= 1
 
     def catch_banana(self):
-        self.banana_count += 1;
-        self.fruit_count += 1;
+        self.banana_count += 1
+        self.fruit_count += 1
+    
+    def do_random_action(self):
+         action = random.choice([self.move_down,self.move_left, self.move_right, self.move_up])
+         action()
 
     def setBoard_size(self, size):
         self.boardSize = size;
