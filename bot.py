@@ -7,6 +7,8 @@ class Bot():
         self.row = 0
         self.column = 0
         self.banana_count = 0
+        self.apple_count = 0
+        self.watermelon_count = 0
         self.fruit_count = 0
         self.boardSize = 0
         if img_size: 
@@ -39,6 +41,14 @@ class Bot():
 
     def catch_banana(self):
         self.banana_count += 1
+        self.fruit_count += 1
+        
+    def catch_apple(self):
+        self.apple_count += 1
+        self.fruit_count += 1
+    
+    def catch_watermelon(self):
+        self.watermelon_count += 1
         self.fruit_count += 1
     
     def do_random_action(self):

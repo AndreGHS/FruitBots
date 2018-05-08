@@ -1,9 +1,9 @@
 import pygame
 from bot import Bot
 from slidersFile import Slider
-from random import randint
+import random
 import numpy as np
-
+import itertools
 # grid size
 WINDOW_SIZE = [720, 516]
 
@@ -42,10 +42,15 @@ light_grey = (171, 178, 186)
 
 logo = pygame.image.load("img/logo_watermelon.png")
 #logo = pygame.transform.scale(logo, (banner_base_size, banner_base_size))
-banana_img = pygame.image.load('img/banana2.png')
+banana_img = pygame.image.load('img/banana3.png')
 banana_img = pygame.transform.scale(banana_img, (30, 30))  
-img_banana_size = banana_img.get_size()[0]
+img_fruit_size = banana_img.get_size()[0]
 
+apple_img = pygame.image.load('img/apple.png')
+apple_img = pygame.transform.scale(apple_img, (30, 30))
+
+watermelon_img = pygame.image.load('img/watermelon.png')
+watermelon_img = pygame.transform.scale(watermelon_img, (30, 30))
 
 banner_base_size = 65
 grid_offset_x = 10
@@ -58,15 +63,25 @@ font_title = pygame.font.Font("font/Roboto-Regular.ttf", font_title_size)
 last_action_time = pygame.time.get_ticks()
 
 # Sliders settings
-num_bananas = Slider("Bananas", 2, 5, 1, 25)
-num_apples = Slider("Apples", 2, 5, 1, 175)
-num_watermelons = Slider("Watermelons", 2, 5, 1, 325)
+banana_slider = Slider("Bananas", 2, 5, 1, 25)
+apple_slider = Slider("Apples", 2, 5, 1, 175)
+watermelon_slidder = Slider("Watermelons", 2, 5, 1, 325)
 slides = list()
-slides.append(num_bananas)
-slides.append(num_apples)
-slides.append(num_watermelons)
+slides.append(banana_slider)
+slides.append(apple_slider)
+slides.append(watermelon_slidder)
 
-num_fruits = TOTAL_FRUITS = num_bananas.val
+BANANA = 1
+APPLE = 2
+WATERMELON = 3
+
+num_fruits = total_fruits = banana_slider.val + apple_slider.val + watermelon_slidder.val
+total_bananas = num_bananas =  banana_slider.val
+total_apples = num_apples = apple_slider.val
+total_watermelons = num_watermelons = watermelon_slidder.val
+
+pairs = list(itertools.product(np.arange(grid_size), repeat = 2))
+del pairs[0]
 
 def process_pygame_events():
     
@@ -145,10 +160,18 @@ def draw_grid():
                                              width, height], 0)
             pygame.draw.rect(new_frame, light_grey, [full_width * column + grid_offset_x+margin, full_height * row + grid_offset_y+margin,
                                              width, height], 1)
-    
+            
+            fruit_to_draw = None
             # draw fruits
-            if grid[row][column] == 1:
-                new_frame.blit(banana_img, ((full_width * column + margin + grid_offset_x + (full_width-img_banana_size)/2), (full_height * row + margin + grid_offset_y+ (full_height-img_banana_size)/2)))
+            if grid[row][column] == BANANA:
+                fruit_to_draw = banana_img
+            elif grid[row][column] == APPLE:
+                fruit_to_draw = apple_img
+            elif grid[row][column] == WATERMELON:
+                fruit_to_draw = watermelon_img
+            
+            if fruit_to_draw:
+                new_frame.blit(fruit_to_draw, ((full_width * column + margin + grid_offset_x + (full_width-img_fruit_size)/2), (full_height * row + margin + grid_offset_y+ (full_height-img_fruit_size)/2)))
 
      
 def game_loop():
@@ -157,6 +180,9 @@ def game_loop():
     global game_start
     global last_action_time
     global num_fruits
+    global num_bananas
+    global num_apples
+    global num_watermelons
     
     new_frame = pygame.Surface(WINDOW_SIZE)
     new_frame.fill(white)
@@ -173,11 +199,22 @@ def game_loop():
             bot.do_random_action()
             last_action_time = pygame.time.get_ticks()
         
-        if grid[bot.row][bot.column] == 1:
+        if grid[bot.row][bot.column] == BANANA:
             bot.catch_banana()         
             grid[bot.row][bot.column] = -1
             num_fruits -= 1
-            
+            num_bananas -= 1
+        elif grid[bot.row][bot.column] == APPLE:
+            bot.catch_apple()         
+            grid[bot.row][bot.column] = -1
+            num_fruits -= 1
+            num_apples -= 1
+        elif grid[bot.row][bot.column] == WATERMELON:
+            bot.catch_watermelon()         
+            grid[bot.row][bot.column] = -1
+            num_fruits -= 1
+            num_watermelons -= 1
+        
         if time_left <= 0 or num_fruits == 0:
             print("here")
             print(num_fruits)
@@ -213,15 +250,31 @@ def new_game():
     bot.row = bot.column = 0
     grid[bot.row][bot.column] = -1
     
-    num_fruits = TOTAL_FRUITS
+    num_fruits = total_fruits
     bot.banana_count = bot.fruit_count = 0
+    
     # place fruits
+    
+    # shuffle possible positions
+    random.shuffle(pairs)
+    positions = pairs[:num_fruits]
+    
+    bananas_placed = 0
+    apples_placed = 0
+    watermelons_placed = 0
     for i in range(num_fruits):
-        pos = np.random.choice(a=grid_size, size=2, replace=False)
-        while pos[0] == 0 and pos[1] == 0:
-            pos = np.random.choice(a=grid_size, size=2, replace=False)
+        pos = positions[i]
+        if bananas_placed < total_bananas:
+            to_place = BANANA
+            bananas_placed +=1
+        elif apples_placed < total_apples:
+            to_place = APPLE
+            apples_placed +=1
+        elif watermelons_placed < total_watermelons:
+            to_place = WATERMELON
+            watermelons_placed +=1
         
-        grid[pos[0]][pos[1]] = 1
+        grid[pos[0]][pos[1]] = to_place
         
     print(grid)    
 
