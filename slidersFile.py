@@ -19,36 +19,13 @@ TRANS = (1, 1, 1)
 
 flow = False  # controls type of color flow
 
-
-class Gradient():
-    def __init__(self, palette, maximum):
-        self.COLORS = palette
-        self.N = len(self.COLORS)
-        self.SECTION = maximum // (self.N - 1)
-
-    def gradient(self, x):
-        """
-        Returns a smooth color profile with only a single input value.
-        The color scheme is determinated by the list 'self.COLORS'
-        """
-        i = x // self.SECTION
-        fraction = (x % self.SECTION) / self.SECTION
-        c1 = self.COLORS[i % self.N]
-        c2 = self.COLORS[(i+1) % self.N]
-        col = [0, 0, 0]
-        for k in range(3):
-            col[k] = (c2[k] - c1[k]) * fraction + c1[k]
-        return col
-
-
-
 class Slider():
     def __init__(self, name, val, maxi, mini, pos):
         self.val = val  # start value
         self.maxi = maxi  # maximum at slider position right
         self.mini = mini  # minimum at slider position left
         self.xpos = pos  # x-location on screen
-        self.ypos = 400
+        self.ypos = 560
         self.surf = pygame.surface.Surface((100, 50))
         self.hit = False  # the hit attribute indicates slider movement due to mouse interaction
         self.name = name
