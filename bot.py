@@ -17,6 +17,7 @@ class Bot():
         else:   
             self.img_size = img.get_size()[0]
         self.img = img
+        self.path = list()
         
     def draw(self, new_frame, margin, width, height, grid_offset_x, grid_offset_y):
         full_width = margin + width
@@ -39,6 +40,10 @@ class Bot():
         if self.column - 1 >= 0:
             self.column -= 1
 
+    def move_to(self, pos):
+        self.row = pos[0]
+        self.column = pos[1]
+
     def catch_banana(self):
         self.banana_count += 1
         self.fruit_count += 1
@@ -57,3 +62,14 @@ class Bot():
 
     def setBoard_size(self, size):
         self.boardSize = size;
+
+    def setPath(self, newPath):
+        self.path = newPath;
+
+    def hasPath(self):
+        if len(self.path) > 0:
+            return True;
+
+    def nextPathMovement(self):
+        self.move_to(self.path[0])
+        self.path.pop(0)

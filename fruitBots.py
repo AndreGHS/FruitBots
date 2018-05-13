@@ -4,6 +4,7 @@ from slidersFile import Slider
 import random
 import numpy as np
 import itertools
+import pathFinding
 
 # grid size
 WINDOW_SIZE = [720, 640]
@@ -15,6 +16,8 @@ margin = 2
 # create grid
 grid_size = 10
 grid = [[0 for x in range(grid_size)] for y in range(grid_size)]
+graph = pathFinding.Graph()
+graph.constructGraphFromGrid(grid_size)
 
 # variável de controlo do ciclo principal
 end = False
@@ -23,7 +26,7 @@ end = False
 bot = Bot()
 bot.setBoard_size(grid_size - 1)
 
-MAX_TIME = 10
+MAX_TIME = 50
 time_left = MAX_TIME
 start_time = 0
 game_start = False
@@ -86,6 +89,8 @@ total_watermelons = num_watermelons = watermelon_slider.val
 
 pairs = list(itertools.product(np.arange(grid_size), repeat=2))
 del pairs[0]
+
+positions = list()
 
 
 def process_pygame_events():
@@ -208,6 +213,7 @@ def game_loop():
     global num_bananas
     global num_apples
     global num_watermelons
+    global positions
 
     new_frame = pygame.Surface([720,516])
     new_frame.fill(white)
@@ -221,7 +227,18 @@ def game_loop():
         time_elapsed_since_last_action = pygame.time.get_ticks() - last_action_time
         if time_elapsed_since_last_action >= 1000:
             grid[bot.row][bot.column] = 0
-            bot.do_random_action()
+            #bot.do_random_action()
+
+            if not bot.hasPath() and num_fruits > 0: #TODO Make bot look for most desired fruit not the first of the list
+                fruit = positions[0]
+                positions.pop(0)
+                startNode = str(bot.row)+str(bot.column)
+                endNode = str(fruit[0])+str(fruit[1])
+                movement = graph.getPathForMovement(graph.bfs_short_path(startNode, endNode))
+                bot.setPath(movement)
+
+            bot.nextPathMovement()
+
             last_action_time = pygame.time.get_ticks()
 
         if grid[bot.row][bot.column] == BANANA:
@@ -266,6 +283,7 @@ def new_game():
     global last_action_time
     global grid
     global num_fruits
+    global positions
 
     start_time = pygame.time.get_ticks()
     time_left = MAX_TIME
