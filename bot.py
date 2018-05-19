@@ -1,9 +1,10 @@
 import pygame
 import random
 
+
 class Bot():
 
-    def __init__(self, img_size = None, img =pygame.image.load('img/bot.png')):
+    def __init__(self, img_size=None, img=pygame.image.load('img/bot.png')):
         self.row = 0
         self.column = 0
         self.banana_count = 0
@@ -11,18 +12,20 @@ class Bot():
         self.watermelon_count = 0
         self.fruit_count = 0
         self.boardSize = 0
-        if img_size: 
-            img = pygame.transform.scale(img, (img_size, img_size))    
+        if img_size:
+            img = pygame.transform.scale(img, (img_size, img_size))
             self.img_size = img_size
-        else:   
+        else:
             self.img_size = img.get_size()[0]
         self.img = img
         self.path = list()
-        
+
     def draw(self, new_frame, margin, width, height, grid_offset_x, grid_offset_y):
         full_width = margin + width
         full_height = margin + height
-        new_frame.blit(self.img, ((full_width * self.column + margin + grid_offset_x + (full_width-self.img_size)/2), (full_height * self.row + margin + grid_offset_y+ (full_height-self.img_size)/2)))
+        new_frame.blit(self.img, (
+        (full_width * self.column + margin + grid_offset_x + (full_width - self.img_size) / 2),
+        (full_height * self.row + margin + grid_offset_y + (full_height - self.img_size) / 2)))
 
     def move_up(self):
         if self.row - 1 >= 0:
@@ -47,29 +50,56 @@ class Bot():
     def catch_banana(self):
         self.banana_count += 1
         self.fruit_count += 1
-        
+
     def catch_apple(self):
         self.apple_count += 1
         self.fruit_count += 1
-    
+
     def catch_watermelon(self):
         self.watermelon_count += 1
         self.fruit_count += 1
-    
-    def do_random_action(self):
+
+    '''def do_random_action(self):
          action = random.choice([self.move_down,self.move_left, self.move_right, self.move_up])
-         action()
+         action()'''
 
     def setBoard_size(self, size):
-        self.boardSize = size;
+        self.boardSize = size
 
     def setPath(self, newPath):
-        self.path = newPath;
+        self.path = newPath
 
     def hasPath(self):
         if len(self.path) > 0:
-            return True;
+            return True
 
     def nextPathMovement(self):
         self.move_to(self.path[0])
         self.path.pop(0)
+
+    def brf(self, belief_list):  # TODO Function that updates Bot's beliefs
+        return
+
+    def options(self, belief_list, intentions):  # TODO function that generates Bot's desires
+        return
+
+    def filter(self, belief_list, desires, intentions):  # TODO function that selects best options for Bot to commit
+        return
+
+    def plan(self, belief_list, intentions):  # TODO function that defines Bot's plan
+        return
+
+    def empty(self, plan):  # TODO verify if plan stack is empty
+        return
+
+    def succeeded(self, intentions, belief_list):  # TODO verify if intentions have succeeded
+        return
+
+    def impossible(self, intentions, belief_list):  # TODO verify if intentions are impossible
+        return
+
+    def reconsider(self, intentions, belief_list):  # TODO control function that decides when to reconsider intentions
+        return
+
+    def sound(self, intentions, belief_list):  # TODO control function that decides when to reconsider plan !NOT SURE!
+        return 
