@@ -1,6 +1,9 @@
 import pygame
 import random
 
+BANANA = 0
+APPLE = 1
+WATERMELON = 2
 
 class Bot():
 
@@ -11,13 +14,23 @@ class Bot():
         self.apple_count = 0
         self.watermelon_count = 0
         self.fruit_count = 0
-        self.boardSize = 0
+        self.fruits_left = 0
+        self.bananas_left = 0
+        self.apples_left = 0
+        self.watermelons_left = 0
+        self.fruit_pos = {}
+        self.bananas_pos = {}
+        self.apples_pos = {}
+        self.watermelons_pos = {}
+        self.time = 0
+        self.Intentions = {}
         if img_size:
             img = pygame.transform.scale(img, (img_size, img_size))
             self.img_size = img_size
         else:
             self.img_size = img.get_size()[0]
         self.img = img
+        self.boardSize = 0
         self.path = list()
 
     def draw(self, new_frame, margin, width, height, grid_offset_x, grid_offset_y):
@@ -77,8 +90,29 @@ class Bot():
         self.move_to(self.path[0])
         self.path.pop(0)
 
-    def brf(self, belief_list):  # TODO Function that updates Bot's beliefs
-        return
+    def updateTime(self, board_time):
+        self.time = board_time
+
+    def update_num_fruits(self, current_fruits_left):
+        self.fruits_left = current_fruits_left[0]
+        self.bananas_left = current_fruits_left[1]
+        self.apples_left = current_fruits_left[2]
+        self.watermelons_left = current_fruits_left[3]
+
+    def set_fruits_pos(self, fruits_pos):
+        self.fruit_pos = fruits_pos[0]
+        self.bananas_pos = fruits_pos[1]
+        self.apples_pos = fruits_pos[2]
+        self.watermelons_pos = fruits_pos[3]
+
+    def set_initial_intention(self, intention):
+        self.Intentions.append(intention)
+
+    def brf(self, perceptions):  # perceptions have different types of variables - list{int, list, list}
+        self.updateTime(perceptions[0])
+        if self.fruits_left > perceptions[1][0]:
+            self.update_num_fruits(perceptions[1])
+            self.set_fruits_pos(perceptions[2])
 
     def options(self, belief_list, intentions):  # TODO function that generates Bot's desires
         return
@@ -102,4 +136,4 @@ class Bot():
         return
 
     def sound(self, intentions, belief_list):  # TODO control function that decides when to reconsider plan !NOT SURE!
-        return 
+        return
