@@ -1,15 +1,19 @@
 import pygame
+import math
 import random
 
 BANANA = 0
 APPLE = 1
 WATERMELON = 2
 
+PLANAHEAD = 3
+
 class Bot():
 
     def __init__(self, img_size=None, img=pygame.image.load('img/bot.png')):
         self.row = 0
         self.column = 0
+        self.provisory_position = [0, 0]
         self.banana_count = 0
         self.apple_count = 0
         self.watermelon_count = 0
@@ -24,6 +28,7 @@ class Bot():
         self.watermelons_pos = {}
         self.time = 0
         self.Intentions = {}
+        self.Plans = {}
         if img_size:
             img = pygame.transform.scale(img, (img_size, img_size))
             self.img_size = img_size
@@ -108,25 +113,50 @@ class Bot():
     def set_initial_intention(self, intention):
         self.Intentions.append(intention)
 
+    #  ------------ BDI closest Fruit -----------------------------------------
+    #  get initial beliefs -> get perceptions and update beliefs -> devise plan -> execute plan -> update beliefs ->
+    #  verify if we need to reconsider -> plan again if yes
+
     def brf(self, perceptions):  # perceptions have different types of variables - list{int, list, list}
         self.updateTime(perceptions[0])
         if self.fruits_left > perceptions[1][0]:
             self.update_num_fruits(perceptions[1])
             self.set_fruits_pos(perceptions[2])
 
+    def plan(self):
+
+        for i in range(PLANAHEAD):
+            next_fruit = self.find_closest_fruit()
+            self.Plans.append(next_fruit)
+            self.provisory_position = next_fruit
+
+    def empty(self):
+        if len(self.Plans) == 0:
+            return True
+
+    def sound(self):
+        for fruit_planned in self.Plans:
+            if fruit_planned not in self.fruit_pos:
+                return True
+
+    def find_closest_fruit(self):
+        closest = 20;
+        closest_fruit = [];
+        for fruit in self.fruit_pos:
+            x = fruit[0] - self.provisory_position[0];
+            y = fruit[1] - self.provisory_position[1];
+            d = math.sqrt(pow(x, 2) + pow(y, 2))
+            if d < closest:
+                closest = d
+                closest_fruit = fruit
+        return closest_fruit
+
+    #  ---------------------------------------------------------------------------------
+
     def options(self, belief_list, intentions):  # TODO function that generates Bot's desires
         return
 
     def filter(self, belief_list, desires, intentions):  # TODO function that selects best options for Bot to commit
-        return
-
-    def plan(self, belief_list, intentions):  # TODO function that defines Bot's plan
-        return
-
-    def empty(self, plan):  # TODO verify if plan stack is empty
-        return
-
-    def succeeded(self, intentions, belief_list):  # TODO verify if intentions have succeeded
         return
 
     def impossible(self, intentions, belief_list):  # TODO verify if intentions are impossible
@@ -135,5 +165,5 @@ class Bot():
     def reconsider(self, intentions, belief_list):  # TODO control function that decides when to reconsider intentions
         return
 
-    def sound(self, intentions, belief_list):  # TODO control function that decides when to reconsider plan !NOT SURE!
+    def succeeded(self, intentions, belief_list):  # TODO verify if intentions have succeeded
         return

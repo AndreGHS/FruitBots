@@ -24,10 +24,11 @@ end = False
 
 # bot
 bot = Bot()
-bot.setBoard_size(grid_size - 1)
+player1 = Bot()
+player1.setBoard_size(grid_size - 1)
 
 MAX_TIME = 50
-time_left = MAX_TIME
+time_count = 0
 start_time = 0
 game_start = False
 
@@ -122,7 +123,7 @@ def process_pygame_events():
                 new_game()
             else:
                 start_time = pygame.time.get_ticks()
-                time_left = MAX_TIME
+                time_count = 0
                 last_action_time = pygame.time.get_ticks()
 
 
@@ -153,7 +154,7 @@ def process_pygame_events():
 
 def draw_banner():
     global new_frame
-    global time_left
+    global time_count
     global game_start
 
     new_frame.fill(dark_grey, (0, 0, banner_base_size, banner_base_size))
@@ -165,13 +166,12 @@ def draw_banner():
     new_frame.blit(title, (font_title_size + banner_base_size, banner_base_size // 2 - (font_title_size // 2)))
 
     if game_start:
-        time_left = (MAX_TIME - (pygame.time.get_ticks() - start_time) // 1000)
+        # time_left = (MAX_TIME - (pygame.time.get_ticks() - start_time) // 1000)
+        time_count = (pygame.time.get_ticks() - start_time) // 1000
 
-    text = font_title.render("Timer: " + str(time_left) + " s", 1, light_grey)
+    text = font_title.render("Timer: " + str(time_count) + " s", 1, light_grey)
     new_frame.blit(text, (
         WINDOW_SIZE[0] - text.get_width() - font_title_size, banner_base_size // 2 - (font_title_size // 2)))
-
-
 
 
 def draw_grid():
@@ -206,7 +206,7 @@ def draw_grid():
 
 def game_loop():
     global new_frame
-    global time_left
+    global time_count
     global game_start
     global last_action_time
     global num_fruits
@@ -226,46 +226,45 @@ def game_loop():
         # new action - random - every second
         time_elapsed_since_last_action = pygame.time.get_ticks() - last_action_time
         if time_elapsed_since_last_action >= 1000:
-            grid[bot.row][bot.column] = 0
+            grid[player1.row][player1.column] = 0
             #bot.do_random_action()
 
-            if not bot.hasPath() and num_fruits > 0: #TODO Make bot look for most desired fruit not the first of the list
+            if not player1.hasPath() and num_fruits > 0: #TODO Make bot look for most desired fruit not the first of the list
                 fruit = positions[0]
                 positions.pop(0)
-                startNode = str(bot.row)+str(bot.column)
+                startNode = str(player1.row)+str(player1.column)
                 endNode = str(fruit[0])+str(fruit[1])
                 movement = graph.getPathForMovement(graph.bfs_short_path(startNode, endNode))
-                bot.setPath(movement)
+                player1.setPath(movement)
 
-            bot.nextPathMovement()
+            player1.nextPathMovement()
 
             last_action_time = pygame.time.get_ticks()
 
-        if grid[bot.row][bot.column] == BANANA:
-            bot.catch_banana()
-            grid[bot.row][bot.column] = -1
+        if grid[player1.row][player1.column] == BANANA:
+            player1.catch_banana()
+            grid[player1.row][player1.column] = -1
             num_fruits -= 1
             num_bananas -= 1
-        elif grid[bot.row][bot.column] == APPLE:
-            bot.catch_apple()
-            grid[bot.row][bot.column] = -1
+        elif grid[player1.row][player1.column] == APPLE:
+            player1.catch_apple()
+            grid[player1.row][player1.column] = -1
             num_fruits -= 1
             num_apples -= 1
-        elif grid[bot.row][bot.column] == WATERMELON:
-            bot.catch_watermelon()
-            grid[bot.row][bot.column] = -1
+        elif grid[player1.row][player1.column] == WATERMELON:
+            player1.catch_watermelon()
+            grid[player1.row][player1.column] = -1
             num_fruits -= 1
             num_watermelons -= 1
 
-        if time_left <= 0 or num_fruits == 0:
+        if num_fruits == 0:
             print("here")
             print(num_fruits)
-            print(time_left)
+            print(time_count)
             game_start = False
             new_game()
 
-    bot.draw(new_frame, margin, width, height, grid_offset_x, grid_offset_y)
-
+    player1.draw(new_frame, margin, width, height, grid_offset_x, grid_offset_y)
 
     for s in slides:
         if s.hit:
@@ -275,9 +274,8 @@ def game_loop():
         s.draw()
 
 
-
 def new_game():
-    global time_left
+    global time_count
     global game_start
     global start_time
     global last_action_time
@@ -286,19 +284,19 @@ def new_game():
     global positions
 
     start_time = pygame.time.get_ticks()
-    time_left = MAX_TIME
+    time_count = 0
     last_action_time = pygame.time.get_ticks()
 
     grid = [[0 for x in range(grid_size)] for y in range(grid_size)]
-    bot.row = bot.column = 0
-    grid[bot.row][bot.column] = -1
+    player1.row = player1.column = 0
+    grid[player1.row][player1.column] = -1
 
     total_bananas = num_bananas = banana_slider.val
     total_apples = num_apples = apple_slider.val
     total_watermelons = num_watermelons = watermelon_slider.val
 
     num_fruits = total_fruits = banana_slider.val + apple_slider.val + watermelon_slider.val
-    bot.banana_count = bot.fruit_count = 0
+    player1.banana_count = player1.fruit_count = 0
 
     # place fruits
 
