@@ -39,9 +39,13 @@ class Bot():
             self.img_size = img_size
         else:
             self.img_size = img.get_size()[0]
+
         self.img = img
         self.boardSize = 0
         self.path = list()
+
+    def get_img(self):
+        return self.img
 
     def draw(self, new_frame, margin, width, height, grid_offset_x, grid_offset_y):
         full_width = margin + width
@@ -55,11 +59,11 @@ class Bot():
             self.row -= 1
 
     def move_down(self):
-        if self.row + 1 <= self.boardSize:
+        if self.row + 1 < self.boardSize:
             self.row += 1
 
     def move_right(self):
-        if self.column + 1 <= self.boardSize:
+        if self.column + 1 < self.boardSize:
             self.column += 1
 
     def move_left(self):
@@ -82,9 +86,9 @@ class Bot():
         self.watermelon_count += 1
         self.fruit_count += 1
 
-    '''def do_random_action(self):
+    def do_random_action(self):
          action = random.choice([self.move_down,self.move_left, self.move_right, self.move_up])
-         action()'''
+         action()
 
     def setBoard_size(self, size):
         self.boardSize = size
@@ -120,7 +124,7 @@ class Bot():
 
     #  ------------ BDI closest Fruit -----------------------------------------
     #  get initial beliefs -> get perceptions and update beliefs -> devise plan -> execute plan -> update beliefs ->
-    #  verify if we need to reconsider -> plan again if yes
+    #  verify if we need to reconsider -> plan again if yespp
 
     def brf(self, perceptions):  # perceptions have different types of variables - list{int, list, list}
         self.updateTime(perceptions[0])

@@ -1,5 +1,5 @@
 import pygame,  sys
-
+from pygame import gfxdraw
 pygame.init()
 
 X = 900  # screen width
@@ -18,6 +18,8 @@ MAGENTA = (255, 0, 255)
 TRANS = (1, 1, 1)
 
 flow = False  # controls type of color flow
+font_size = 12
+font = pygame.font.Font("font/Roboto-Regular.ttf", font_size)
 
 class Slider():
     def __init__(self, name, val, maxi, mini, pos):
@@ -29,7 +31,6 @@ class Slider():
         self.surf = pygame.surface.Surface((100, 50))
         self.hit = False  # the hit attribute indicates slider movement due to mouse interaction
         self.name = name
-
         self.txt_surf = font.render(self.name + " " + str(int(self.val//1)), 1, BLACK)
         self.txt_rect = self.txt_surf.get_rect(center=(50, 15))
 
@@ -45,10 +46,10 @@ class Slider():
         self.button_surf = pygame.surface.Surface((20, 20))
         self.button_surf.fill(TRANS)
         self.button_surf.set_colorkey(TRANS)
-        pygame.draw.circle(self.button_surf, BLACK, (10, 10), 6, 0)
         pygame.draw.circle(self.button_surf, ORANGE, (10, 10), 4, 0)
-
-    def draw(self):
+        pygame.gfxdraw.aacircle(self.button_surf, 10, 10, 6, BLACK)
+        
+    def draw(self, frame):
         """ Combination of static and dynamic graphics in a copy of
     the basic slide surface
     """
@@ -72,7 +73,7 @@ class Slider():
         self.txt_rect = self.txt_surf.get_rect(center=(50, 15))
         self.surf.blit(self.txt_surf, self.txt_rect)
         # screen
-        screen.blit(surf, (self.xpos, self.ypos))
+        frame.blit(surf, (self.xpos, self.ypos))
 
     def move(self):
         """
@@ -84,6 +85,3 @@ class Slider():
         if self.val > self.maxi:
             self.val = self.maxi
 
-
-font = pygame.font.SysFont("Verdana", 12)
-screen = pygame.display.set_mode((X, Y))
