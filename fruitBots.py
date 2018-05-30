@@ -36,10 +36,10 @@ graph.constructGraphFromGrid(grid_size)
 end = False
 
 # bot
-player1 = Bot(icon_size, pygame.image.load('img/walle.png'))
+player1 = Bot(-1, icon_size, pygame.image.load('img/walle.png'))
 player1.setBoard_size(grid_size)
 
-player2 = Bot(icon_size, pygame.image.load('img/eve.png'))
+player2 = Bot(-2, icon_size, pygame.image.load('img/eve.png'))
 player2.setBoard_size(grid_size)
 
 game_start = False
@@ -99,6 +99,7 @@ last_action_time = pygame.time.get_ticks()
 BANANA = 1
 APPLE = 2
 WATERMELON = 3
+WALL = -3
 
 total_bananas = num_bananas = 2
 total_apples = num_apples = 2
@@ -377,6 +378,54 @@ def draw_slidebars():
 
     sb_watermelon.render(new_frame)
 
+def get_neighbor_cells(row,col):
+    global grid_size
+
+    cells = [
+                grid[row-1][col] if row-1 >= 0 else WALL, # up
+                grid[row][col-1] if col-1 >= 0 else WALL, # left
+                grid[row+1][col] if row+1 < grid_size else WALL, # down
+                grid[row][col+1] if col+1 < grid_size else WALL # right
+            ]
+    return cells
+
+
+def get_perception(bot):
+
+    arch = bot.get_architecture()
+
+    # tem acesso as 4 celulas em redor
+    if arch == "React":
+        return get_neighbor_cells(bot.row, bot.col)
+    #elif arch == "Delib":
+    #    return grid # entre outras coisas
+
+def change_environment(old_pos, action_cell_pos, bot):
+    global grid
+    global num_fruits
+    global num_apples
+    global num_bananas
+    global num_watermelons
+
+    old_row = old_pos[0]
+    old_col = old_pos[1]
+    grid[old_row][old_col] = 0
+
+    print("bot", bot.symbol)
+
+    # grabbed fruit. if 0 means we moved
+    if action_cell_pos[0] < 4:
+
+        fruit_pos = action_cell_pos[1]
+        fruit_type = grid[fruit_pos[0]][fruit_pos[1]]
+        grid[fruit_pos[0]][fruit_pos[1]] = 0
+        num_fruits -= 1
+        if fruit_type == APPLE: num_apples -= 1
+        elif fruit_type == BANANA: num_bananas -= 1
+        elif fruit_type == WATERMELON: num_watermelons -= 1
+
+    grid[bot.row][bot.col] = bot.symbol
+
 def game_loop():
     global new_frame
     global game_start
@@ -405,14 +454,20 @@ def game_loop():
         time_elapsed_since_last_action = pygame.time.get_ticks() - last_action_time
         if time_elapsed_since_last_action >= 500:
             print(time_elapsed_since_last_action)
-            grid[player1.row][player1.column] = 0
-            grid[player2.row][player2.column] = 0
             steps += 1
-           
-            if not player1.hasPath() and num_fruits > 0: #TODO Make bot look for most desired fruit not the first of the list
+
+            old_pos_1 = (player1.row, player1.col)
+            old_pos_2 = (player2.row, player2.col)
+
+            action_cell_pos_1 = player1.execute(get_perception(player1))
+            change_environment(old_pos_1, action_cell_pos_1, player1)
+            action_cell_pos_2 = player2.execute(get_perception(player2))
+            change_environment(old_pos_2, action_cell_pos_2, player2)
+            last_action_time = pygame.time.get_ticks()
+            """if not player1.hasPath() and num_fruits > 0: #TODO Make bot look for most desired fruit not the first of the list
                 fruit = positions[0]
                 positions.pop(0)
-                startNode = str(player1.row)+str(player1.column)
+                startNode = str(player1.row)+str(player1.col)
                 endNode = str(fruit[0])+str(fruit[1])
                 movement = graph.getPathForMovement(graph.bfs_short_path(startNode, endNode))
                 player1.setPath(movement)
@@ -422,37 +477,37 @@ def game_loop():
             #player1.do_random_action()
             last_action_time = pygame.time.get_ticks()
 
-        if grid[player1.row][player1.column] == BANANA:
+        if grid[player1.row][player1.col] == BANANA:
             player1.catch_banana()
-            grid[player1.row][player1.column] = -1
+            grid[player1.row][player1.col] = player1.symbol
             num_fruits -= 1
             num_bananas -= 1
-        elif grid[player1.row][player1.column] == APPLE:
+        elif grid[player1.row][player1.col] == APPLE:
             player1.catch_apple()
-            grid[player1.row][player1.column] = -1
+            grid[player1.row][player1.col] = player1.symbol
             num_fruits -= 1
             num_apples -= 1
-        elif grid[player1.row][player1.column] == WATERMELON:
+        elif grid[player1.row][player1.col] == WATERMELON:
             player1.catch_watermelon()
-            grid[player1.row][player1.column] = -1
+            grid[player1.row][player1.col] = player1.symbol
             num_fruits -= 1
             num_watermelons -= 1
 
-        if grid[player2.row][player2.column] == BANANA:
+        if grid[player2.row][player2.col] == BANANA:
             player2.catch_banana()
-            grid[player2.row][player2.column] = -1
+            grid[player2.row][player2.col] = player2.symbol
             num_fruits -= 1
             num_bananas -= 1
-        elif grid[player2.row][player2.column] == APPLE:
+        elif grid[player2.row][player2.col] == APPLE:
             player2.catch_apple()
-            grid[player2.row][player2.column] = -1
+            grid[player2.row][player2.col] = player2.symbol
             num_fruits -= 1
             num_apples -= 1
-        elif grid[player2.row][player2.column] == WATERMELON:
+        elif grid[player2.row][player2.col] == WATERMELON:
             player2.catch_watermelon()
-            grid[player2.row][player2.column] = -1
+            grid[player2.row][player2.col] = player2.symbol
             num_fruits -= 1
-            num_watermelons -= 1
+            num_watermelons -= 1"""
 
         if num_fruits == 0:
             print("here")
@@ -482,10 +537,10 @@ def new_game(place = True):
     last_action_time = pygame.time.get_ticks()
 
     grid = np.array([[0 for x in range(grid_size)] for y in range(grid_size)])
-    player1.row = player1.column = 0
-    player2.row = player2.column = grid_size-1
-    grid[player1.row][player1.column] = -1
-    grid[player2.row][player2.column] = -2
+    player1.row = player1.col = 0
+    player2.row = player2.col = grid_size-1
+    grid[player1.row][player1.col] = -1
+    grid[player2.row][player2.col] = -2
 
     if place: place_fruits(False)
 
@@ -511,10 +566,10 @@ def func_shuffle():
     global grid_size
 
     grid = np.array([[0 for x in range(grid_size)] for y in range(grid_size)])
-    player1.row = player1.column = 0
-    player2.row = player2.column = grid_size-1
-    grid[player1.row][player1.column] = -1
-    grid[player2.row][player2.column] = -2
+    player1.row = player1.col = 0
+    player2.row = player2.col = grid_size-1
+    grid[player1.row][player1.col] = player1.symbol
+    grid[player2.row][player2.col] = player2.symbol
 
     place_fruits(True)
 
@@ -531,10 +586,10 @@ def set_board_size(new_size):
     # create grid
     grid = np.array([[0 for x in range(grid_size)] for y in range(grid_size)])
 
-    player1.row = player1.column = 0
-    player2.row = player2.column = grid_size-1
-    grid[player1.row][player1.column] = -1
-    grid[player2.row][player2.column] = -2
+    player1.row = player1.col = 0
+    player2.row = player2.col = grid_size-1
+    grid[player1.row][player1.col] = player1.symbol
+    grid[player2.row][player2.col] = player2.symbol
     player1.setBoard_size(grid_size)
     player2.setBoard_size(grid_size)
 
