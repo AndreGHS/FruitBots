@@ -3,6 +3,7 @@ import math
 import random
 import pathFinding
 from react.react import React
+from delib.bdi import BDI
 
 BANANA = 0
 APPLE = 1
@@ -18,9 +19,12 @@ MOVE_LEFT = 5
 MOVE_DOWN = 6
 MOVE_RIGHT = 7
 
+
+WALL = -3
+
 class Bot():
 
-    def __init__(self, symbol, img_size=None, img=pygame.image.load('img/bot.png')):
+    def __init__(self, symbol, grid_size, img_size=None, img=pygame.image.load('img/bot.png')):
         self.row = 0
         self.col = 0
         self.symbol = symbol
@@ -28,6 +32,7 @@ class Bot():
         self.apple_count = 0
         self.watermelon_count = 0
         self.fruit_count = 0
+        self.number_wins = 0
         
         if img_size:
             img = pygame.transform.scale(img, (img_size, img_size))
@@ -36,15 +41,21 @@ class Bot():
             self.img_size = img.get_size()[0]
 
         self.img = img
-        self.boardSize = 0
+        self.boardSize = grid_size
         self.architecture = React()
+        #self.architecture = BDI(grid_size)
 
     def symbol(self):
         print("self", self.symbol)
         return self.symbol
 
-    def set_architecture(self, new_architecture):
-        self.architecture = new_architecture
+    def set_architecture(self, new_arch_name):
+
+        if new_arch_name ==  "React":
+            self.architecture = React()
+        elif new_arch_name == "BDI":
+            self.architecture = BDI(self.boardSize)
+
 
     def get_img(self):
         return self.img
@@ -94,6 +105,8 @@ class Bot():
 
     def setBoard_size(self, size):
         self.boardSize = size
+        if self.get_architecture() == "BDI":
+            self.architecture.updateGraph(size)
 
     def get_fruit_pos(self, action):
         if action == CATCH_UP:
@@ -107,6 +120,16 @@ class Bot():
 
         return fruit_pos
 
+    def get_neighbor_cells(self, grid, row,col):
+
+        cells = [
+                    grid[row-1][col] if row-1 >= 0 else WALL, # up
+                    grid[row][col-1] if col-1 >= 0 else WALL, # left
+                    grid[row+1][col] if row+1 < self.boardSize else WALL, # down
+                    grid[row][col+1] if col+1 < self.boardSize else WALL # right
+                ]
+        return cells
+
     # return action executed and, if action = move: new position, if action=catch: fruit position 
     def execute(self, perception):
 
@@ -119,7 +142,13 @@ class Bot():
             elif action == MOVE_RIGHT: self.move_right()
             cell_pos=(self.row,self.col)
         else: 
-            cell_type = perception[action]
+
+            if self.get_architecture() == "React":
+                cell_type = perception[action]
+            else:
+            #elif self.architecture == "Delib":
+                cell_type = self.get_neighbor_cells(perception.get("grid"), self.row, self.col)[action]
+
             if cell_type == BANANA: self.catch_banana()
             elif cell_type == APPLE: self.catch_apple()
             elif cell_type == WATERMELON: self.catch_watermelon()

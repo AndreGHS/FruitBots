@@ -29,20 +29,13 @@ icon_size = 30
 # create grid
 grid = np.array([[0 for x in range(grid_size)] for y in range(grid_size)])
 
-graph = pathFinding.Graph()
-graph.constructGraphFromGrid(grid_size)
-
 # variavel de controlo do ciclo principal
 end = False
 
 # bot
-player1 = Bot(-1, icon_size, pygame.image.load('img/walle.png'))
-player1.setBoard_size(grid_size)
+player1 = Bot(-1, grid_size, icon_size, pygame.image.load('img/walle.png'))
 
-player2 = Bot(-2, icon_size, pygame.image.load('img/eve.png'))
-player2.setBoard_size(grid_size)
-
-game_start = False
+player2 = Bot(-2, grid_size, icon_size, pygame.image.load('img/eve.png'))
 steps = 0
 
 pygame.init()
@@ -67,7 +60,14 @@ ORANGE = (209, 112, 31)
 LIGHT_ORANGE = (249, 209, 147)
 DARK_ORANGE = (151, 51, 0)
 
+RED = (223, 79, 68)
+LIGHT_RED = (247, 168, 151)
+DARK_RED = (171, 25, 36)
+
 screen.fill(GREY)
+
+winner_img  = pygame.image.load('img/cup.png')
+winner_img = pygame.transform.scale(winner_img, (icon_size, icon_size))
 
 logo = pygame.image.load("img/logo_watermelon.png")
 # logo = pygame.transform.scale(logo, (banner_base_size, banner_base_size))
@@ -84,8 +84,11 @@ banner_base_size = 65
 grid_offset_x = 10
 grid_offset_y = 75
 
-bot_menu_width = 300
 bot_menu_margin = 50
+bot_menu_x = grid_offset_x + grid_total_width + bot_menu_margin
+bot_menu_h = (grid_total_height//2)-banner_base_size-grid_offset_x- (grid_offset_x/2)
+bot_menu_width = 300
+
 
 font_title_size = 20
 font_title = pygame.font.Font("font/Roboto-Regular.ttf", font_title_size)
@@ -113,6 +116,10 @@ del pairs[len(pairs)-1]
 
 positions = list()
 
+is_reset = False
+game_start = False
+is_pause = False
+
 ###########################################################################
 
 def process_pygame_events():
@@ -121,6 +128,8 @@ def process_pygame_events():
     global start_time
     global time_left
     global last_action_time
+    global is_reset
+    global is_pause
 
     mouse = pygame.mouse.get_pos()
 
@@ -129,57 +138,121 @@ def process_pygame_events():
             end = True
         elif event.type == pygame.MOUSEBUTTONDOWN:
 
-            if not game_start:
-                if mouse in sb_apple:
-                    sb_apple.focus()
-                elif mouse in sb_banana:
-                    sb_banana.focus()
-                elif mouse in sb_watermelon:
-                    sb_watermelon.focus()
-                elif mouse in bt_shuffle:
+            if mouse in bt_start and is_reset:
+                bt_start.click()
+            elif mouse in bt_reset and not is_reset and not game_start:
+                    bt_reset.click()
+            elif mouse in bt_shuffle and is_reset and not game_start:
                     bt_shuffle.click()
-                elif mouse in bt_board_small and grid_size != GRID_SIZE_SMALL:
-                    bt_board_small.click()
-                elif mouse in bt_board_medium and grid_size != GRID_SIZE_MEDIUM:
-                    bt_board_medium.click()
-                elif mouse in bt_board_large and grid_size != GRID_SIZE_LARGE:
-                    bt_board_large.click()
+            elif not game_start:
+                if mouse in bt_react_bot1 and player1.get_architecture() != "React":
+                    bt_react_bot1.click()
+                elif mouse in bt_bdi_bot1 and player1.get_architecture() != "BDI":
+                    bt_bdi_bot1.click()
+                elif mouse in bt_react_bot2 and player2.get_architecture() != "React":
+                    bt_react_bot2.click()
+                elif mouse in bt_bdi_bot2 and player2.get_architecture() != "BDI":
+                    bt_bdi_bot2.click()
+
+                if is_reset:
+                    if mouse in sb_apple:
+                        sb_apple.focus()
+                    elif mouse in sb_banana:
+                        sb_banana.focus()
+                    elif mouse in sb_watermelon:
+                        sb_watermelon.focus()
+                    elif mouse in bt_board_small and grid_size != GRID_SIZE_SMALL:
+                        bt_board_small.click()
+                    elif mouse in bt_board_medium and grid_size != GRID_SIZE_MEDIUM:
+                        bt_board_medium.click()
+                    elif mouse in bt_board_large and grid_size != GRID_SIZE_LARGE:
+                        bt_board_large.click()
+                    
 
         elif event.type == pygame.MOUSEBUTTONUP:
                 sb_banana.unfocus()
                 sb_apple.unfocus()
                 sb_watermelon.unfocus()
+
+                bt_start.release()
+                bt_reset.release()
                 bt_shuffle.release()
                 bt_board_small.release()
                 bt_board_medium.release()
                 bt_board_large.release()
+
+                bt_react_bot1.release()
+                bt_react_bot2.release()
+                bt_bdi_bot1.release()
+                bt_bdi_bot2.release()
         else:
 
-            if mouse in bt_shuffle and not game_start:
+            if mouse in bt_shuffle and is_reset and not game_start:
                 bt_shuffle.color = LIGHT_ORANGE
             else:
                 bt_shuffle.color = ORANGE
+        
+            if mouse in bt_start and is_reset:
+                bt_start.color = LIGHT_RED
+            else:
+                if game_start and not is_pause:
+                    bt_start.color = DARK_RED
+                elif not game_start or is_pause:
+                    bt_start.color = RED
 
-            if mouse in bt_board_small and not game_start:
+            if mouse in bt_reset and not is_reset and not game_start:
+                bt_reset.color = LIGHT_RED
+            else:
+                bt_reset.color = RED
+            
+            if mouse in bt_board_small and is_reset and not game_start and grid_size != GRID_SIZE_SMALL:
                 bt_board_small.color = LIGHT_TURQUOISE
             elif grid_size == GRID_SIZE_SMALL:
                 bt_board_small.color = DARK_TURQUOISE
             else:
                 bt_board_small.color = TURQUOISE
 
-            if mouse in bt_board_medium and not game_start:
+            if mouse in bt_board_medium and is_reset and not game_start  and grid_size != GRID_SIZE_MEDIUM:
                 bt_board_medium.color = LIGHT_TURQUOISE
             elif grid_size == GRID_SIZE_MEDIUM:
                 bt_board_medium.color = DARK_TURQUOISE
             else:
                 bt_board_medium.color = TURQUOISE
 
-            if mouse in bt_board_large and not game_start:
+            if mouse in bt_board_large and is_reset and not game_start  and grid_size != GRID_SIZE_LARGE:
                 bt_board_large.color = LIGHT_TURQUOISE
             elif grid_size == GRID_SIZE_LARGE:
                 bt_board_large.color = DARK_TURQUOISE
             else:
                 bt_board_large.color = TURQUOISE
+
+            if mouse in bt_react_bot1 and not game_start and player1.get_architecture() != "React":
+                bt_react_bot1.color = LIGHT_TURQUOISE
+            elif player1.get_architecture() == "React":
+                bt_react_bot1.color = DARK_TURQUOISE
+            else:
+                bt_react_bot1.color = TURQUOISE
+
+            if mouse in bt_bdi_bot1 and not game_start and player1.get_architecture() != "BDI":
+                bt_bdi_bot1.color = LIGHT_TURQUOISE
+            elif player1.get_architecture() == "BDI":
+                bt_bdi_bot1.color = DARK_TURQUOISE
+            else:
+                bt_bdi_bot1.color = TURQUOISE
+
+            if mouse in bt_react_bot2 and not game_start and player2.get_architecture() != "React":
+                bt_react_bot2.color = LIGHT_TURQUOISE
+            elif player2.get_architecture() == "React":
+                bt_react_bot2.color = DARK_TURQUOISE
+            else:
+                bt_react_bot2.color = TURQUOISE    
+
+            if mouse in bt_bdi_bot2 and not game_start and player2.get_architecture() != "BDI":
+                bt_bdi_bot2.color = LIGHT_TURQUOISE
+            elif player2.get_architecture() == "BDI":
+                bt_bdi_bot2.color = DARK_TURQUOISE
+            else:
+                bt_bdi_bot2.color = TURQUOISE
 
         pressed = pygame.key.get_pressed()
 
@@ -187,7 +260,6 @@ def process_pygame_events():
             print("PRESS SPACE")
             if not game_start:
                 game_start = True
-
 
 def draw_banner():
     global new_frame
@@ -215,12 +287,10 @@ def remove_old_fruits(fruit_type, old_total_fruits):
 
     old_positions = pairs[:old_total_fruits]
 
-    print(grid)
-    print(fruit_type)
 
     match_fruits = np.asarray(np.where(grid == fruit_type)).T
     match_fruits = [tuple(l) for l in match_fruits]
-    print("march_fruits", match_fruits)
+
     
     random.shuffle(match_fruits)
     fruit_delete = match_fruits[:n_fruits_remove]
@@ -316,28 +386,36 @@ def draw_botmenu(bot, number):
 
     global new_frame
 
-    x = grid_offset_x + grid_total_width + bot_menu_margin
 
-    menu_h = (grid_total_height//2)-banner_base_size-grid_offset_x- (grid_offset_x/2)
     y = grid_offset_y + cell_margin
-    y = y + (menu_h+banner_base_size+grid_offset_x*2 if number == 2 else 0)
+    y = y + (bot_menu_h+banner_base_size+grid_offset_x*2 if number == 2 else 0)
 
     bot_img = bot.get_img()
-    bot_img_h = bot_img.get_size()[1]
 
-    pygame.draw.rect(new_frame, LIGHT_GREY,(x, y,
+    pygame.draw.rect(new_frame, LIGHT_GREY,(bot_menu_x, y,
                               bot_menu_width, banner_base_size), 1)
 
-    pygame.draw.rect(new_frame, LIGHT_GREY,(x, banner_base_size+ y + grid_offset_x,
-                              bot_menu_width, menu_h), 1)
+    pygame.draw.rect(new_frame, LIGHT_GREY,(bot_menu_x, banner_base_size+ y + grid_offset_x,
+                              bot_menu_width, bot_menu_h), 1)
 
     new_frame.blit(bot_img, (
-        x+grid_offset_x, y+((banner_base_size) // 2 - (bot_img_h // 2))))
+        bot_menu_x+grid_offset_x, y+((banner_base_size) // 2 - (icon_size // 2))))
 
     text = font_title.render("Bot "+str(number), 1, LIGHT_GREY)
     
     new_frame.blit(text, (
-        x+(grid_offset_x*2) + bot_img_h, y+((banner_base_size) // 2 - (font_title_size // 2))))
+        bot_menu_x+(grid_offset_x*2) + icon_size, y+((banner_base_size) // 2 - (font_title_size // 2))))
+
+    text_number_wins = font_menu.render(str(bot.number_wins), 1, DARK_GREY)
+
+    w_text_win = font_menu.size(str(bot.number_wins))[0]
+    win_x = bot_menu_x+bot_menu_width-(grid_offset_x*2)-icon_size-w_text_win
+
+    win_y_img = y+((banner_base_size) // 2 - (icon_size // 2))
+    win_y_text = y+((banner_base_size) // 2 - (font_menu_size // 2))
+
+    new_frame.blit(winner_img, (win_x, win_y_img))
+    new_frame.blit(text_number_wins, (win_x+icon_size+grid_offset_x, win_y_text))
 
 
 def draw_buttons():
@@ -346,10 +424,18 @@ def draw_buttons():
     text_board_size = font_menu.render("Board Size", 1, DARK_GREY)
     new_frame.blit(text_board_size, (bt_x_ori+bt_board_size[0]*2+ grid_offset_x, bt_y- bt_board_size[1]))
 
+
     bt_board_small.render(new_frame)
     bt_board_medium.render(new_frame)
     bt_board_large.render(new_frame)
     bt_shuffle.render(new_frame)
+    bt_start.render(new_frame)
+    bt_reset.render(new_frame)
+
+    bt_react_bot1.render(new_frame)
+    bt_react_bot2.render(new_frame)
+    bt_bdi_bot1.render(new_frame)
+    bt_bdi_bot2.render(new_frame)
 
 def draw_slidebars():
     global new_frame
@@ -391,14 +477,23 @@ def get_neighbor_cells(row,col):
 
 
 def get_perception(bot):
+    global grid
+    global num_bananas
+    global num_apples
+    global num_watermelons
 
     arch = bot.get_architecture()
 
     # tem acesso as 4 celulas em redor
     if arch == "React":
         return get_neighbor_cells(bot.row, bot.col)
-    #elif arch == "Delib":
-    #    return grid # entre outras coisas
+
+    elif arch == "BDI":
+        return {"grid":grid, 
+                "row":bot.row, 
+                "col":bot.col, 
+                "fruits_count": [(BANANA,bot.banana_count), (APPLE, bot.apple_count), (WATERMELON, bot.watermelon_count)], 
+                "fruits_left": [(BANANA,num_bananas), (APPLE,num_apples), (WATERMELON,num_watermelons)]}
 
 def change_environment(old_pos, action_cell_pos, bot):
     global grid
@@ -410,8 +505,6 @@ def change_environment(old_pos, action_cell_pos, bot):
     old_row = old_pos[0]
     old_col = old_pos[1]
     grid[old_row][old_col] = 0
-
-    print("bot", bot.symbol)
 
     # grabbed fruit. if 0 means we moved
     if action_cell_pos[0] < 4:
@@ -439,6 +532,8 @@ def game_loop():
     global cell_width
     global cell_height
     global grid
+    global is_reset
+    global is_pause
 
     new_frame = pygame.Surface([WINDOW_SIZE[0],WINDOW_SIZE[1]])
     new_frame.fill(WHITE)
@@ -449,11 +544,10 @@ def game_loop():
     draw_botmenu(player1, 1)
     draw_botmenu(player2, 2)
 
-    if game_start:
+    if game_start and not is_pause:
         # new action - random - every second
         time_elapsed_since_last_action = pygame.time.get_ticks() - last_action_time
         if time_elapsed_since_last_action >= 500:
-            print(time_elapsed_since_last_action)
             steps += 1
 
             old_pos_1 = (player1.row, player1.col)
@@ -464,56 +558,14 @@ def game_loop():
             action_cell_pos_2 = player2.execute(get_perception(player2))
             change_environment(old_pos_2, action_cell_pos_2, player2)
             last_action_time = pygame.time.get_ticks()
-            """if not player1.hasPath() and num_fruits > 0: #TODO Make bot look for most desired fruit not the first of the list
-                fruit = positions[0]
-                positions.pop(0)
-                startNode = str(player1.row)+str(player1.col)
-                endNode = str(fruit[0])+str(fruit[1])
-                movement = graph.getPathForMovement(graph.bfs_short_path(startNode, endNode))
-                player1.setPath(movement)
-
-            player1.nextPathMovement()
-            
-            #player1.do_random_action()
-            last_action_time = pygame.time.get_ticks()
-
-        if grid[player1.row][player1.col] == BANANA:
-            player1.catch_banana()
-            grid[player1.row][player1.col] = player1.symbol
-            num_fruits -= 1
-            num_bananas -= 1
-        elif grid[player1.row][player1.col] == APPLE:
-            player1.catch_apple()
-            grid[player1.row][player1.col] = player1.symbol
-            num_fruits -= 1
-            num_apples -= 1
-        elif grid[player1.row][player1.col] == WATERMELON:
-            player1.catch_watermelon()
-            grid[player1.row][player1.col] = player1.symbol
-            num_fruits -= 1
-            num_watermelons -= 1
-
-        if grid[player2.row][player2.col] == BANANA:
-            player2.catch_banana()
-            grid[player2.row][player2.col] = player2.symbol
-            num_fruits -= 1
-            num_bananas -= 1
-        elif grid[player2.row][player2.col] == APPLE:
-            player2.catch_apple()
-            grid[player2.row][player2.col] = player2.symbol
-            num_fruits -= 1
-            num_apples -= 1
-        elif grid[player2.row][player2.col] == WATERMELON:
-            player2.catch_watermelon()
-            grid[player2.row][player2.col] = player2.symbol
-            num_fruits -= 1
-            num_watermelons -= 1"""
 
         if num_fruits == 0:
             print("here")
             print(num_fruits)
             game_start = False
-            new_game()
+            is_pause = False
+            is_reset = False
+            #new_game()
 
     player1.draw(new_frame, cell_margin, cell_width, cell_height, grid_offset_x, grid_offset_y)
 
@@ -553,7 +605,30 @@ def new_game(place = True):
 
     total_fruits = num_fruits = num_bananas + num_apples + num_watermelons
 
-    print(grid)
+
+def init_game():
+
+    global steps
+    global last_action_time
+    global grid
+    global grid_size
+    global total_fruits
+    global pairs
+    global positions
+
+    steps = 0
+    last_action_time = pygame.time.get_ticks()
+
+    grid = np.array([[0 for x in range(grid_size)] for y in range(grid_size)])
+    player1.row = player1.col = 0
+    player2.row = player2.col = grid_size-1
+    grid[player1.row][player1.col] = -1
+    grid[player2.row][player2.col] = -2
+
+    # shuffle possible positions
+    random.shuffle(pairs)
+    positions = pairs[:total_fruits]
+
 
 ###########################################################################
 
@@ -593,13 +668,13 @@ def set_board_size(new_size):
     player1.setBoard_size(grid_size)
     player2.setBoard_size(grid_size)
 
-    print(grid)
-
     pairs = list(itertools.product(np.arange(grid_size), repeat=2))
     del pairs[0]
     del pairs[len(pairs)-1]
 
-    place_fruits(True)
+    random.shuffle(pairs)
+
+    if is_reset : place_fruits(False)
 
 def func_board_small():
 
@@ -610,7 +685,19 @@ def func_board_medium():
     set_board_size(GRID_SIZE_MEDIUM)
 
 def func_board_large():
-    set_board_size(GRID_SIZE_LARGE)    
+    set_board_size(GRID_SIZE_LARGE)
+
+def func_start_simulation():
+    global game_start
+    global is_pause
+
+    if not game_start: game_start = True
+    else: is_pause = not is_pause
+
+def func_reset_simulation():
+    global is_reset
+    is_reset = True
+    new_game()
 
 bt_margin = 15
 bt_shuffle_size = (130,40)
@@ -630,13 +717,57 @@ bt_board_medium = Button(func_board_medium, (bt_x, bt_y), bt_board_size, 'M', co
 bt_x += bt_board_size[0] + bt_margin
 bt_board_large = Button(func_board_large, (bt_x, bt_y), bt_board_size, 'L', color = TURQUOISE)
 
+
+bt_start_x = grid_offset_x + grid_total_width + bot_menu_margin + bot_menu_width + (bt_shuffle_size[0]//2) + bot_menu_margin
+bt_start_y = grid_offset_y + cell_margin + (bt_shuffle_size[1]//2)
+bt_start = Button(func_start_simulation, (bt_start_x, bt_start_y), bt_shuffle_size, 'Run', color = RED)
+
+
+bt_reset_x = bt_start_x + bt_shuffle_size[0] +bt_margin
+bt_reset_y = bt_start_y
+bt_reset = Button(func_reset_simulation, (bt_reset_x, bt_reset_y), bt_shuffle_size, 'Reset', color = RED)
+
+
+# bot menu
+
+def func_set_arch(bot, arch):
+    bot.set_architecture(arch)
+
+def func_set_react_bot1():
+
+    func_set_arch(player1, "React")
+
+def func_set_react_bot2():
+    func_set_arch(player2, "React")
+
+def func_set_bdi_bot1():
+    func_set_arch(player1, "BDI")
+
+def func_set_bdi_bot2():
+    func_set_arch(player2, "BDI")
+
+bt_arch_h = bot_menu_h//4
+bt_arch_size = (bot_menu_width, bt_arch_h)
+
+bot_menu_y_bot1 = grid_offset_y + cell_margin + banner_base_size + grid_offset_x
+
+bot_menu_y_bot2 = bot_menu_y_bot1 + bot_menu_h+banner_base_size+grid_offset_x*2
+
+bt_arch_x = bot_menu_x+(bt_arch_size[0]//2)
+
+bt_react_bot1 = Button(func_set_react_bot1, (bt_arch_x, bot_menu_y_bot1), bt_arch_size, 'Reactive', color = TURQUOISE)
+bot_menu_y_bot1 += bt_arch_h
+bt_bdi_bot1 = Button(func_set_bdi_bot1, (bt_arch_x, bot_menu_y_bot1), bt_arch_size, 'BDI', color = TURQUOISE)
+
+bt_react_bot2 = Button(func_set_react_bot2, (bt_arch_x, bot_menu_y_bot2), bt_arch_size, 'Reactive', color = TURQUOISE)
+bot_menu_y_bot2 += bt_arch_h
+bt_bdi_bot2 = Button(func_set_bdi_bot2, (bt_arch_x, bot_menu_y_bot2), bt_arch_size, 'BDI', color = TURQUOISE)
+
 #
 # Sliders settings
 #
 
 sb_margin = 25
-print(grid_total_width)
-print(grid_total_width//3 -(sb_margin*2))
 sb_size = (grid_total_width//3 -(sb_margin),30)
 
 sb_x = sb_x_init = grid_offset_x + sb_size[0]//2 + (sb_margin//2)
@@ -706,9 +837,7 @@ def func_sb_watermelon(value):
 
 sb_watermelon.func = func_sb_watermelon
 
-
-new_game(False)
-place_fruits(True)
+init_game()
 while not end:
     process_pygame_events()
 
